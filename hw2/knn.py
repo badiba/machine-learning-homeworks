@@ -72,7 +72,7 @@ class Knn:
 
         return accuracy / exampleCountInFold
 
-    def Train(self, k):
+    def GetAccuracyOfK(self, k):
         accuracy = 0
         foldCount = len(self._trainData)
         for i in range(foldCount):
@@ -80,15 +80,61 @@ class Knn:
 
         return accuracy / foldCount
 
+    def Train(self, kLimit):
+        bestK = 1
+        bestAccuracy = 0
+
+        k = 1
+        while k < kLimit:
+            accuracy = self.GetAccuracyOfK(k)
+
+            if (accuracy > bestAccuracy):
+                bestAccuracy = accuracy
+                bestK = k
+
+            k += 1
+
+        return (bestK, bestAccuracy)
+
+    def GetPredictionOfExample(self, k, example):
+        trainPointDistances = []
+
+        for i in range(len(self._trainData)):
+            for j in range(len(self._trainData[i])):
+                distance = self.GetDistance(example[0], self._trainData[i][j])
+                trainPointDistances.append((distance, self._trainLabels[i][j]))
+
+        trainPointDistances.sort(key=SortTrainingPointDistances)
+        trainPointDistances = trainPointDistances[:k]
+
+        exampleLabel = example[1]
+        prediction = self.MakePrediction(trainPointDistances)
+        if (exampleLabel == prediction):
+            return 1
+
+        return 0
+
+    def Test(self, k):
+        correctPredictionCount = 0
+
+        testCount = len(self._testData)
+        for i in range(testCount):
+            predictionResult = self.GetPredictionOfExample(
+                k, (self._testData[i], self._testLabels[i]))
+
+            correctPredictionCount += predictionResult
+
+        return correctPredictionCount / testCount
+
     def Debug(self):
         print("debugging...")
 
 
 def main():
     knn = Knn(10, 3)
-
-    for i in range(200):
-        print(knn.Train(i))
+    print(knn.Test(11))
+    #optimizationResult = knn.Train(200)
+    # print(optimizationResult)
 
 
 if __name__ == '__main__':
