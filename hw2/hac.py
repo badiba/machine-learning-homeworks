@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import copy
 import os
+import sys
 
 
 class Criterion:
@@ -9,6 +10,9 @@ class Criterion:
     CompleteLinkage = 1
     AverageLinkage = 2
     Centroid = 3
+
+    All = [SingleLinkage, CompleteLinkage, AverageLinkage, Centroid]
+    Names = ["SingleLinkage", "CompleteLinkage", "AverageLinkage", "Centroid"]
 
 
 class Hac:
@@ -22,6 +26,18 @@ class Hac:
             dirname, "hw2_data", "hac", "data3.npy"))
         self._dataset4 = np.load(os.path.join(
             dirname, "hw2_data", "hac", "data4.npy"))
+
+    def GetDatasetByIndex(self, index):
+        if (index == 2):
+            return self._dataset2, "data2"
+
+        elif (index == 3):
+            return self._dataset3, "data3"
+
+        elif (index == 4):
+            return self._dataset4, "data4"
+
+        return self._dataset1, "data1"
 
     def GetDistanceBetween(self, left, right):
         xSquared = (left[0] - right[0]) * (left[0] - right[0])
@@ -80,8 +96,10 @@ class Hac:
     def GetDistanceBetweenClusters(self, dataset, left, right, criterion):
         if (criterion == Criterion.SingleLinkage):
             return self.SingleLinkage(dataset, left, right)
+
         elif (criterion == Criterion.CompleteLinkage):
             return self.CompleteLinkage(dataset, left, right)
+
         elif (criterion == Criterion.AverageLinkage):
             return self.AverageLinkage(dataset, left, right)
 
@@ -120,7 +138,7 @@ class Hac:
 
         return clusters
 
-    def PlotFinalCluster(self, dataset, clusters):
+    def PlotFinalCluster(self, dataset, datasetName, criterion, clusters):
         xAxisClustered = []
         yAxisClustered = []
         colors = ['green', 'blue', 'black', 'red']
@@ -138,25 +156,34 @@ class Hac:
             plt.scatter(xAxisClustered[i],
                         yAxisClustered[i], s=2, color=colors[i])
 
-        # naming the x axis
-        plt.xlabel('x - axis')
-        # naming the y axis
-        plt.ylabel('y - axis')
-        # giving a title to my graph
-        plt.title('Two lines on same graph!')
-
-        # show a legend on the plot
-        plt.legend()
-
-        # function to show the plot
+        plt.xlabel('x position')
+        plt.ylabel('y position')
+        plt.title(datasetName + "-" + Criterion.Names[criterion])
         plt.show()
+
+    def PlotFinalClusterForAllCriterions(self, dataset, datasetName, minK):
+        for criterion in Criterion.All:
+            finalCluster = self.GetFinalClusters(
+                dataset, criterion, minK)
+            self.PlotFinalCluster(dataset, datasetName,
+                                  criterion, finalCluster)
 
 
 def main():
     hac = Hac()
-    dede = hac.GetFinalClusters(hac._dataset2, Criterion.SingleLinkage, 2)
-    hac.PlotFinalCluster(hac._dataset1, dede)
+    minK = 2
+    dataset = hac._dataset1
+    datasetName = "data1"
+
+    if (len(sys.argv) == 2):
+        dataset, datasetName = hac.GetDatasetByIndex(sys.argv[1])
+
+        if (sys.argv[1] == 4):
+            minK = 4
+
+    hac.PlotFinalClusterForAllCriterions(dataset, datasetName, minK)
 
 
 if __name__ == '__main__':
+    # test this on linux with command line arguments
     main()
