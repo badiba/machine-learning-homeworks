@@ -109,11 +109,14 @@ def gain_ratio(data, attr_index, attr_vals_list):
         if (subsetExampleCount == 0):
             continue
 
+        if (subsetExampleCount == attributeExampleCount):
+            negativeIntrinsic = -0.00001
+            break
+
         countRatio = subsetExampleCount / attributeExampleCount
         negativeIntrinsic += math.log(countRatio, 2) * countRatio
 
     gainRatio = gain / (-1 * negativeIntrinsic)
-
     return gainRatio, division
 
 

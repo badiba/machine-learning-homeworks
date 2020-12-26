@@ -106,6 +106,28 @@ class DecisionTree:
                 self.CreateTree(childNode, subset, method, compare)
                 node._children.append(childNode)
 
+    def Test(self, node):
+        correctCount = 0
+        for example in self._testData:
+            treeTraverser = node
+            while (not treeTraverser._isLeaf):
+                attrValue = example[treeTraverser._attribute]
+                branchIndex = self._attrValsList[treeTraverser._attribute].index(
+                    attrValue)
+
+                treeTraverser = treeTraverser._children[branchIndex]
+
+            if (treeTraverser._value == example[-1]):
+                correctCount += 1
+
+        return correctCount / len(self._testData)
+
+    def GetTreeSummary(self, node, summary):
+        summary.append(node._attribute)
+
+        for child in node._children:
+            self.GetTreeSummary(child, summary)
+
     def PrintTree(self, node):
         print(node._attribute)
 
@@ -122,7 +144,15 @@ def main():
     decisionTree.CreateTree(
         decisionTree._root, decisionTree._trainData, methodOne[0], methodOne[1])
 
-    decisionTree.PrintTree(decisionTree._root)
+    #summary = []
+    #decisionTree.GetTreeSummary(decisionTree._root, summary)
+    # print(summary)
+
+    dede = [5, -1, 3, -1, 0, 1, -1, -1, 4, -1, -1, -1, 4, -1, -1, -1, 4, -1, 1, -1, -1, 2, -1, -1, -1, -1, -1, -1, 1, 4, -1, -1, -1, 4, -1, 2, -1, -1, -1, -1, -1, -1, -1, 1, 4, -1, -1, -1, -1, -1, -1, 0, 1, -1, -1, 2, -1, -1, -1, 4, -1, -1, -1, 4, -1, -1, -1, 4, -1, 2, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, 2, -1, -1, -
+            1, 4, -1, -1, -1, 4, -1, 2, -1, -1, -1, -1, -1, -1, -1, 4, 2, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, 3, -1, 1, 0, -1, -1, -1, -1, 0, -1, -1, -1, -1, -1, -1, 0, 1, -1, -1, 2, 4, -1, -1, -1, -1, -1, -1, 2, -1, -1, -1, -1, 1, -1, -1, -1, 2, 4, -1, -1, -1, -1, -1, -1, 2, 4, -1, -1, -1, -1, -1, -1, 2, 1, -1, -1, -1, -1, -1, -1, -1]
+
+    accuracy = decisionTree.Test(decisionTree._root)
+    print(accuracy)
 
 
 if __name__ == '__main__':
