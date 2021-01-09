@@ -186,4 +186,83 @@ def chi_squared_test(data, attr_index, attr_vals_list):
     :param attr_vals_list: List of values that attributes may take
     :return: chi squared value (float), degree of freedom (int)
     """
-    pass
+
+    labels = attr_vals_list[-1]
+    division = divide(data, attr_index, attr_vals_list)
+    table = []
+
+    for subset in division:
+        table.append([])
+
+        for label in labels:
+            table[-1].append(0)
+
+        for example in subset:
+            labelIndex = labels.index(example[-1])
+            table[-1][labelIndex] += 1
+
+    rowCount = len(table)
+    columnCount = len(table[0])
+
+    goodRows = []
+    goodColumns = []
+
+    for i in range(rowCount):
+        for j in range(columnCount):
+            if (table[i][j] != 0):
+                goodRows.append(i)
+                break
+
+    for j in range(columnCount):
+        for i in range(rowCount):
+            if (table[i][j] != 0):
+                goodColumns.append(j)
+                break
+
+    trimmedTable = []
+
+    for i in range(len(goodRows)):
+        trimmedTable.append([])
+
+        for j in range(len(goodColumns)):
+            trimmedTable[-1].append(table[goodRows[i]][goodColumns[j]])
+
+    rowSum = []
+    columnSum = []
+
+    for i in range(len(trimmedTable[0])):
+        sumThing = 0
+
+        for j in range(len(trimmedTable)):
+            sumThing += trimmedTable[j][i]
+
+        rowSum.append(sumThing)
+
+    for i in range(len(trimmedTable)):
+        sumThing = 0
+
+        for j in range(len(trimmedTable[0])):
+            sumThing += trimmedTable[i][j]
+
+        columnSum.append(sumThing)
+
+    total = 0
+    for rs in rowSum:
+        total += rs
+
+    expectedValues = []
+
+    for i in range(len(trimmedTable)):
+        expectedValues.append([])
+        for j in range(len(trimmedTable[0])):
+            value = (rowSum[j] * columnSum[i]) / total
+            expectedValues[-1].append(value)
+
+    xObs = 0
+    for i in range(len(expectedValues)):
+        for j in range(len(expectedValues[0])):
+            difference = expectedValues[i][j] - trimmedTable[i][j]
+            xObs += (difference * difference) / expectedValues[i][j]
+
+    df = (len(trimmedTable) - 1) * (len(trimmedTable[0]) - 1)
+    return xObs, df

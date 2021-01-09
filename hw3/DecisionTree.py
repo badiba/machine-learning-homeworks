@@ -1,5 +1,7 @@
 import pickle
+import os
 from dt import divide, entropy, info_gain, gain_ratio, gini, avg_gini_index, chi_squared_test
+from graphviz import Digraph
 
 
 def minIndex(lst):
@@ -48,7 +50,10 @@ class Node:
 
 class DecisionTree:
     def __init__(self):
-        with open('hw3_data/dt/data.pkl', 'rb') as f:
+        dirname = os.path.dirname(os.path.abspath(__file__))
+        path = os.path.join(dirname, "hw3_data", "dt", "data.pkl")
+
+        with open(path, 'rb') as f:
             self._trainData, self._testData, self._attrValsList, self._attrNames = pickle.load(
                 f)
 
@@ -128,9 +133,23 @@ class DecisionTree:
         for child in node._children:
             self.GetTreeSummary(child, summary)
 
-    def PrintTree(self, node):
-        print(node._attribute)
+    def PrintTreeHelper(self, node, dot, indices, currentIndex):
+        if (node._isLeaf):
+            return
 
+        for child in node._children:
+            childIndex = indices[-1] + 1
+            indices.append(childIndex)
+            dot.node(str(childIndex), self._attrNames[child._attribute])
+            dot.edge(str(currentIndex), str(childIndex), "dede")
+            self.PrintTreeHelper(child, dot, indices, childIndex)
+
+    def PrintTree(self, node):
+        if (node._isLeaf):
+            print(node._value)
+            return
+
+        print(self._attrNames[node._attribute])
         for child in node._children:
             self.PrintTree(child)
 
@@ -142,17 +161,16 @@ def main():
 
     decisionTree = DecisionTree()
     decisionTree.CreateTree(
-        decisionTree._root, decisionTree._trainData, methodOne[0], methodOne[1])
+        decisionTree._root, decisionTree._trainData, methodThree[0], methodThree[1])
 
     #summary = []
     #decisionTree.GetTreeSummary(decisionTree._root, summary)
     # print(summary)
 
-    dede = [5, -1, 3, -1, 0, 1, -1, -1, 4, -1, -1, -1, 4, -1, -1, -1, 4, -1, 1, -1, -1, 2, -1, -1, -1, -1, -1, -1, 1, 4, -1, -1, -1, 4, -1, 2, -1, -1, -1, -1, -1, -1, -1, 1, 4, -1, -1, -1, -1, -1, -1, 0, 1, -1, -1, 2, -1, -1, -1, 4, -1, -1, -1, 4, -1, -1, -1, 4, -1, 2, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, 2, -1, -1, -
-            1, 4, -1, -1, -1, 4, -1, 2, -1, -1, -1, -1, -1, -1, -1, 4, 2, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, 3, -1, 1, 0, -1, -1, -1, -1, 0, -1, -1, -1, -1, -1, -1, 0, 1, -1, -1, 2, 4, -1, -1, -1, -1, -1, -1, 2, -1, -1, -1, -1, 1, -1, -1, -1, 2, 4, -1, -1, -1, -1, -1, -1, 2, 4, -1, -1, -1, -1, -1, -1, 2, 1, -1, -1, -1, -1, -1, -1, -1]
-
     accuracy = decisionTree.Test(decisionTree._root)
     print(accuracy)
+
+    # decisionTree.PrintTree(decisionTree._root)
 
 
 if __name__ == '__main__':
