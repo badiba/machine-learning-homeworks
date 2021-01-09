@@ -63,11 +63,11 @@ class SVM:
 
         for kernel in self._kernels:
             svc = SVC(kernel=kernel)
-            svc.fit(self._trainDataSep, self._trainLabelsSep)
+            svc.fit(self._trainDataNonSep, self._trainLabelsNonSep)
 
             savePath = os.path.join(dirname, "3-2-" + kernel)
-            draw_svm(svc, self._trainDataSep,
-                     self._trainLabelsSep, -3, 3, -3, 3, savePath)
+            draw_svm(svc, self._trainDataNonSep,
+                     self._trainLabelsNonSep, -3, 3, -3, 3, savePath)
 
     def TrainCatDog(self):
         parameters = {'kernel': self._kernels,
