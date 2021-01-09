@@ -223,7 +223,7 @@ class DecisionTree:
                          str(child._labelCounts))
             else:
                 dot.node(
-                    str(childIndex), self._attrNames[child._attribute] + str(child._labelCounts))
+                    str(childIndex), self._attrNames[child._attribute])
 
             edgeName = self._attrValsList[node._attribute][i]
             dot.edge(str(currentIndex), str(childIndex), edgeName)
