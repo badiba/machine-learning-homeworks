@@ -38,18 +38,21 @@ class Node:
         self._attribute = -1
         self._isLeaf = False
         self._value = ""
+        self._labelCounts = []
         self._children = []
 
     def SetNode(self, attribute):
         self._attribute = attribute
         self._isLeaf = False
         self._value = ""
+        self._labelCounts = []
         self._children = []
 
-    def SetLeafNode(self, leafValue):
+    def SetLeafNode(self, leafValue, labelCounts):
         self._attribute = -1
         self._isLeaf = True
         self._value = leafValue
+        self._labelCounts = labelCounts
         self._children = []
 
 
@@ -96,10 +99,23 @@ class DecisionTree:
         attrIndex = compare(attributePerformances)
         return attrIndex, attributeDivisions[attrIndex]
 
+    def CountLabels(self, data):
+        labels = self._attrValsList[-1]
+
+        labelCounts = []
+        for i in labels:
+            labelCounts.append(0)
+
+        for example in data:
+            labelIndex = labels.index(example[-1])
+            labelCounts[labelIndex] += 1
+
+        return labelCounts
+
     def CreateTree(self, node, data, method, compare):
         isAllSame = self.IsAllSame(data)
         if (isAllSame[0]):
-            node.SetLeafNode(isAllSame[1])
+            node.SetLeafNode(isAllSame[1], self.CountLabels(data))
             return
 
         attrIndex, division = self.DecideOnAttribute(data, method, compare)
@@ -108,7 +124,8 @@ class DecisionTree:
         for subset in division:
             if (len(subset) == 0):
                 childNode = Node()
-                childNode.SetLeafNode(self.GetMostCommonLabel(data))
+                childNode.SetLeafNode(
+                    self.GetMostCommonLabel(data), self.CountLabels(subset))
                 node._children.append(childNode)
 
             else:
@@ -119,7 +136,7 @@ class DecisionTree:
     def CreatePrePrunedTree(self, node, data, method, compare):
         isAllSame = self.IsAllSame(data)
         if (isAllSame[0]):
-            node.SetLeafNode(isAllSame[1])
+            node.SetLeafNode(isAllSame[1], self.CountLabels(data))
             return
 
         attrIndex, division = self.DecideOnAttribute(data, method, compare)
@@ -127,7 +144,8 @@ class DecisionTree:
             data, attrIndex, self._attrValsList)
 
         if (chiSquareValue < chiSquareTable[df]):
-            node.SetLeafNode(self.GetMostCommonLabel(data))
+            node.SetLeafNode(self.GetMostCommonLabel(
+                data), self.CountLabels(data))
             return
 
         node.SetNode(attrIndex)
@@ -135,7 +153,8 @@ class DecisionTree:
         for subset in division:
             if (len(subset) == 0):
                 childNode = Node()
-                childNode.SetLeafNode(self.GetMostCommonLabel(data))
+                childNode.SetLeafNode(
+                    self.GetMostCommonLabel(data), self.CountLabels(subset))
                 node._children.append(childNode)
 
             else:
@@ -174,7 +193,7 @@ class DecisionTree:
 
                 alternativeChild = Node()
                 alternativeChild.SetLeafNode(
-                    self.GetMostCommonLabel(division[i]))
+                    self.GetMostCommonLabel(division[i]), currentChild._labelCounts)
 
                 oldAcc = self.Test(self._root, validationDataset)
 
@@ -194,12 +213,27 @@ class DecisionTree:
         if (node._isLeaf):
             return
 
-        for child in node._children:
+        for i in range(len(node._children)):
+            child = node._children[i]
             childIndex = indices[-1] + 1
             indices.append(childIndex)
-            dot.node(str(childIndex), self._attrNames[child._attribute])
-            dot.edge(str(currentIndex), str(childIndex), "dede")
+
+            if (child._isLeaf):
+                dot.node(str(childIndex), child._value +
+                         str(child._labelCounts))
+            else:
+                dot.node(
+                    str(childIndex), self._attrNames[child._attribute] + str(child._labelCounts))
+
+            edgeName = self._attrValsList[node._attribute][i]
+            dot.edge(str(currentIndex), str(childIndex), edgeName)
             self.PrintTreeHelper(child, dot, indices, childIndex)
+
+    def PrintTreeAdvanced(self, fileName):
+        dot = Digraph()
+        dot.node('1', self._attrNames[self._root._attribute])
+        self.PrintTreeHelper(self._root, dot, [1], 1)
+        dot.render(fileName, view=False)
 
     def PrintTree(self, node):
         if (node._isLeaf):
@@ -253,7 +287,10 @@ def main():
 
         accuracy = decisionTree.Test(
             decisionTree._root, decisionTree._testData)
-        print(accuracy)
+        print("Accuracy: " + str(accuracy))
+
+        decisionTree.PrintTreeAdvanced("tree-for-" + argument)
+        print("Tree diagram is saved to execution path.")
 
     else:
         print("Wrong argument. See README file. Terminating...")
