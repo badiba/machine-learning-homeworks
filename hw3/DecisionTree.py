@@ -1,7 +1,12 @@
 import pickle
 import os
+import sys
 from dt import divide, entropy, info_gain, gain_ratio, gini, avg_gini_index, chi_squared_test
 from graphviz import Digraph
+
+
+chiSquareTable = [-1, 2.71, 4.61, 6.25, 7.78,
+                  9.24, 10.6, 12.0, 13.4, 14.7, 16.0]
 
 
 def minIndex(lst):
@@ -111,9 +116,36 @@ class DecisionTree:
                 self.CreateTree(childNode, subset, method, compare)
                 node._children.append(childNode)
 
-    def Test(self, node):
+    def CreatePrePrunedTree(self, node, data, method, compare):
+        isAllSame = self.IsAllSame(data)
+        if (isAllSame[0]):
+            node.SetLeafNode(isAllSame[1])
+            return
+
+        attrIndex, division = self.DecideOnAttribute(data, method, compare)
+        chiSquareValue, df = chi_squared_test(
+            data, attrIndex, self._attrValsList)
+
+        if (chiSquareValue < chiSquareTable[df]):
+            node.SetLeafNode(self.GetMostCommonLabel(data))
+            return
+
+        node.SetNode(attrIndex)
+
+        for subset in division:
+            if (len(subset) == 0):
+                childNode = Node()
+                childNode.SetLeafNode(self.GetMostCommonLabel(data))
+                node._children.append(childNode)
+
+            else:
+                childNode = Node()
+                self.CreatePrePrunedTree(childNode, subset, method, compare)
+                node._children.append(childNode)
+
+    def Test(self, node, dataset):
         correctCount = 0
-        for example in self._testData:
+        for example in dataset:
             treeTraverser = node
             while (not treeTraverser._isLeaf):
                 attrValue = example[treeTraverser._attribute]
@@ -125,7 +157,32 @@ class DecisionTree:
             if (treeTraverser._value == example[-1]):
                 correctCount += 1
 
-        return correctCount / len(self._testData)
+        return correctCount / len(dataset)
+
+    def PostPruneTree(self, node, data, validationDataset):
+        division = divide(data, node._attribute, self._attrValsList)
+
+        for i in range(len(node._children)):
+            if (not node._children[i]._isLeaf):
+                self.PostPruneTree(
+                    node._children[i], division[i], validationDataset)
+
+        # change most common label
+        for i in range(len(node._children)):
+            if (not node._children[i]._isLeaf):
+                currentChild = node._children[i]
+
+                alternativeChild = Node()
+                alternativeChild.SetLeafNode(
+                    self.GetMostCommonLabel(division[i]))
+
+                oldAcc = self.Test(self._root, validationDataset)
+
+                node._children[i] = alternativeChild
+                newAcc = self.Test(self._root, validationDataset)
+
+                if (oldAcc > newAcc):
+                    node._children[i] = currentChild
 
     def GetTreeSummary(self, node, summary):
         summary.append(node._attribute)
@@ -159,18 +216,48 @@ def main():
     methodTwo = gain_ratio, maxIndex
     methodThree = avg_gini_index, minIndex
 
-    decisionTree = DecisionTree()
-    decisionTree.CreateTree(
-        decisionTree._root, decisionTree._trainData, methodThree[0], methodThree[1])
+    if (len(sys.argv) == 2):
+        argument = sys.argv[1]
 
-    #summary = []
-    #decisionTree.GetTreeSummary(decisionTree._root, summary)
-    # print(summary)
+        decisionTree = DecisionTree()
+        if (argument == "2-1"):
+            decisionTree.CreateTree(
+                decisionTree._root, decisionTree._trainData, methodOne[0], methodOne[1])
 
-    accuracy = decisionTree.Test(decisionTree._root)
-    print(accuracy)
+        elif (argument == "2-2"):
+            decisionTree.CreateTree(
+                decisionTree._root, decisionTree._trainData, methodTwo[0], methodTwo[1])
 
-    # decisionTree.PrintTree(decisionTree._root)
+        elif (argument == "2-3"):
+            decisionTree.CreateTree(
+                decisionTree._root, decisionTree._trainData, methodThree[0], methodThree[1])
+
+        elif (argument == "2-4"):
+            decisionTree.CreatePrePrunedTree(
+                decisionTree._root, decisionTree._trainData, methodTwo[0], methodTwo[1])
+
+        elif (argument == "2-5"):
+            decisionTree.CreateTree(
+                decisionTree._root, decisionTree._trainData, methodTwo[0], methodTwo[1])
+
+            trainSplitIndex = int(len(decisionTree._trainData) * 0.8)
+            trainSet = decisionTree._trainData[:trainSplitIndex]
+            validationSet = decisionTree._trainData[trainSplitIndex:]
+
+            decisionTree.PostPruneTree(
+                decisionTree._root, trainSet, validationSet)
+
+        else:
+            print("Wrong argument. See README file. Terminating...")
+            exit()
+
+        accuracy = decisionTree.Test(
+            decisionTree._root, decisionTree._testData)
+        print(accuracy)
+
+    else:
+        print("Wrong argument. See README file. Terminating...")
+        exit()
 
 
 if __name__ == '__main__':
