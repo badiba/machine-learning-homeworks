@@ -193,7 +193,7 @@ class DecisionTree:
 
                 alternativeChild = Node()
                 alternativeChild.SetLeafNode(
-                    self.GetMostCommonLabel(division[i]), currentChild._labelCounts)
+                    self.GetMostCommonLabel(division[i]), self.CountLabels(division[i]))
 
                 oldAcc = self.Test(self._root, validationDataset)
 
