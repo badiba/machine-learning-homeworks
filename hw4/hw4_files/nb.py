@@ -11,8 +11,6 @@ def vocabulary(data):
     :return: Set of words in the data
     """
 
-    # add text preprocessing
-
     vocab = set()
 
     for example in data:
@@ -34,8 +32,6 @@ def train(train_data, train_labels, vocab):
              second level, the keys are all of the words in vocab and the values are their estimated probabilities.
              pi is a dictionary. Its keys are class names and values are their probabilities.
     """
-
-    # add text preprocessing
 
     pi = {}
     theta = {}
@@ -80,8 +76,6 @@ def test(theta, pi, vocab, test_data):
     :return: scores, list of lists. len(scores) is the number of examples in the test set. Every inner list contains
              tuples where the first element is the score and the second element is the class name.
     """
-
-    # add text preprocessing
 
     scores = []
 
